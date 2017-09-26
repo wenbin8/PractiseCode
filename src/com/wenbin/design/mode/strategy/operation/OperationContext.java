@@ -1,14 +1,17 @@
 package com.wenbin.design.mode.strategy.operation;
 
+import com.wenbin.design.mode.strategy.operation.entry.AddCalculate;
 import com.wenbin.design.mode.strategy.operation.entry.ICalculateStrategy;
+import com.wenbin.design.mode.strategy.operation.entry.SubtractCalculate;
 
 /**
  * Created by wenbin on 2017/9/26.
  */
 public class OperationContext {
     ICalculateStrategy calculate = null;
-    public OperationContext(char flag) {
-        calculate = CalculateFactory.createInstance(flag);
+
+    public OperationContext(ICalculateStrategy calculate) {
+        this.calculate = calculate;
     }
 
     public int getResult(int num1, int num2) {
@@ -16,14 +19,19 @@ public class OperationContext {
     }
 
     public static void main(String[] args) {
-        OperationContext AddContext = new OperationContext('+');
-        int result = AddContext.getResult(100, 150);
+        ICalculateStrategy iCalculateStrategy = new AddCalculate();
 
-        System.out.println("Add:" + result);
+        OperationContext operationContext = new OperationContext(iCalculateStrategy);
+        int num = operationContext.getResult(150, 100);
 
-        OperationContext SubContext = new OperationContext('-');
-        result = SubContext.getResult(100, 150);
+        System.out.println("Add:" + num);
 
-        System.out.println("sub:" + result);
+        iCalculateStrategy = new SubtractCalculate();
+
+        operationContext = new OperationContext(iCalculateStrategy);
+        num = operationContext.getResult(150, 100);
+
+        System.out.println("Sub:" + num);
+
     }
 }
