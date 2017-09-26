@@ -1,5 +1,7 @@
 package com.wenbin.design.mode.strategy.operation;
 
+import com.wenbin.design.mode.strategy.operation.entry.ICalculateStrategy;
+
 /**
  * Created by wenbin on 2017/9/26.
  */
