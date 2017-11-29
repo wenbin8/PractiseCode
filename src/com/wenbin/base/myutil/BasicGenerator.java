@@ -7,6 +7,7 @@ import net.mindview.util.Generator;
 
 /**
  * 可以为任何一个类构造一个Generator
+ *
  * @param <T>
  */
 public class BasicGenerator<T> implements Generator<T> {

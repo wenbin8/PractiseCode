@@ -46,8 +46,7 @@ public class CollectionMethods {
         print("c.contains(" + val + ") = " + c.contains(val));
         // Is a Collection in this Collection?
         print("c.containsAll(c2) = " + c.containsAll(c2));
-        Collection<String> c3 =
-                ((List<String>) c).subList(3, 5);
+        Collection<String> c3 = ((List<String>) c).subList(3, 5);
         // Keep all the elements that are in both
         // c2 and c3 (an intersection of sets):
         c2.retainAll(c3);
