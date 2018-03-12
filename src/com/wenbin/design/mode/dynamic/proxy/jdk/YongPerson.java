@@ -11,4 +11,9 @@ public class YongPerson implements IPerson {
         return "多读书,长脑子.";
     }
 
+    @Override
+    public void findLove(String name) {
+        System.out.println(name);
+    }
+
 }

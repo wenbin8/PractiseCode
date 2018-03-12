@@ -16,8 +16,10 @@ public class DynamicProxyTest {
 
         String bookName = "分布式存储";
 
-        String s = iPerson.readBook(bookName);
+//        String s = iPerson.readBook(bookName);
+//
+//        System.out.printf(s);
 
-        System.out.printf(s);
+        iPerson.findLove("撒的发是的");
     }
 }

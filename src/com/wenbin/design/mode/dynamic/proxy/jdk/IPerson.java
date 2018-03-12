@@ -6,4 +6,6 @@ package com.wenbin.design.mode.dynamic.proxy.jdk;
 public interface IPerson {
 
     String readBook(String bookName);
+
+    void findLove(String name);
 }
