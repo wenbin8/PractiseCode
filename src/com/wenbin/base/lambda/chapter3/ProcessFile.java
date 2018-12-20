@@ -17,9 +17,10 @@ public class ProcessFile {
     }
 
     public static void main(String[] args) throws IOException {
-        String oneLine = processFile((BufferedReader br) -> br.readLine());
+        System.out.println(Thread.currentThread());
+        String oneLine = processFile((BufferedReader br) -> br.readLine()+ ":" + Thread.currentThread());
         System.out.println(oneLine);
-        String twoLines = processFile((BufferedReader br) -> br.readLine() + br.readLine());
+        String twoLines = processFile((BufferedReader br) -> br.readLine() + br.readLine()+ ":" + Thread.currentThread());
         System.out.println(twoLines);
     }
 }
