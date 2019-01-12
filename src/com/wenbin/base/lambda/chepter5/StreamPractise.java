@@ -6,9 +6,14 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.IntSummaryStatistics;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -19,6 +24,18 @@ import java.util.stream.Stream;
  * @Description:
  */
 public class StreamPractise {
+
+    public static List<Dish> menu = Arrays.asList(
+            new Dish("pork", false, 800, Type.MEAT),
+            new Dish("beef", false, 700, Type.MEAT),
+            new Dish("chicken", false, 400, Type.MEAT),
+            new Dish("french fries", true, 530, Type.OHTER),
+            new Dish("rice", true, 350, Type.OHTER),
+            new Dish("season fruit", true, 120, Type.OHTER),
+            new Dish("pizza", true, 550, Type.OHTER),
+            new Dish("prawna", false, 300, Type.FISH),
+            new Dish("salmon", false, 450, Type.FISH)
+    );
 
     public static void main(String[] args) {
         System.out.println("----------筛选和切片-----------");
@@ -115,15 +132,189 @@ public class StreamPractise {
 
         System.out.println("--------------构建流---------------");
         constructorStream();
+        /**
+         * 流(Stream)支持两种类型的操作:中间操作和终端操作.
+         * 中间操作可以链接起来,将一个流转换为另一个流.这些操作不会消耗流,其目的是建立一个流水线.
+         * 终端操作会消耗流,以产生一个最终结果,通常可以通过优化流水线来缩短计算时间.
+         */
 
-        System.out.println("--------------收集器(待续)----------");
+        System.out.println("--------------收集器----------");
+        /**
+         * collect是一个归约操作,就像reduce一样可以接受各种做法作为参数,将流中的元素累积成一个汇总结果.具体的做
+         * 法是通过定义新的Collector接口来定义的,因此区分Collection,Collector,collect是很重要的.
+         *
+         * 收集器可以简单灵活的定义collect方法用来生成集合的标准.对流调用collect方法将对流中的元素触发一个归约操
+         * 作(由Collector来参数化)
+         *
+         * Collector会对元素应用一个转换函数(很多时候是不体现任何效果的恒等转换,例如toList),并将结果累积在一个数
+         * 据结构中.
+         */
+
+        System.out.println("--------------收集器-预定义----------");
+        // 归约和汇总
+        long howManyDishes = menu.stream().collect(Collectors.counting());
+        long howManyDishes1 = menu.stream().count();
+
+        System.out.println(howManyDishes + ":" + howManyDishes1);
+
+        Comparator<Dish> dishComparator = Comparator.comparing(Dish::getCalories);
+        Optional<Dish> max = menu.stream().collect(Collectors.maxBy(dishComparator));
+        Optional<Dish> min = menu.stream().collect(Collectors.minBy(dishComparator));
+
+        System.out.println("max:" + max);
+        System.out.println("min:" + min);
+
+        int sum = menu.stream().collect(Collectors.summingInt(Dish::getCalories));
+        System.out.println("sum:" + sum);
+
+        double avg = menu.stream().collect(Collectors.averagingInt(Dish::getCalories));
+        System.out.println("avg:" + avg);
+        // 可以通过一次summarizing操作获取,总和,平均值,最大,最小
+        IntSummaryStatistics menuIss = menu.stream().collect(Collectors.summarizingInt(Dish::getCalories));
+        System.out.println(menuIss);
+
+        // 连接字符串
+        String name1 = menu.stream().map(Dish::getName).collect(Collectors.joining());
+        System.out.println(name1);
+        String name2 = menu.stream().map(Dish::getName).collect(Collectors.joining(","));
+        System.out.println(name2);
+
+        // 广义的归约汇总,上面所有的收集器,都是一个可以用reducing工厂方法定义的归约过程的特殊情况.方便可读性.
+        /**
+         * Collectors.reducing 需要3个参数:
+         * 第一个参数是归约操作的起始值,也是流中没有元素时的返回值,所以很显然对于值和而言0是一个很合适的值
+         * 第二个参数就是需要归约的值
+         * 第三个参数将第一个参数和第二个参数累积成一个同类型值的操作.
+         */
+        // 用reducing方法创建收集器计算菜单总热量
+        int totalCalories = menu.stream().collect(Collectors.reducing(0, Dish::getCalories, (i, j) -> i + j));
+        System.out.println("totalCalories:" + totalCalories);
+
+        // 单参数形式的reducing来找到热量最高的菜
+        Optional<Dish> maxDish = menu.stream().collect(Collectors.reducing((d1, d2) -> d1.getCalories() > d2.getCalories() ? d1 : d2));
+        /**
+         * 单参数reducing工厂方法创建的收集器看做三参数方法的特殊情况,它把流中的第一个项目作为起点,把恒等函数(即一个合数仅仅是返回其
+         * 输入参数)作为一个转换函数.这也意味着,要是把单参数reducing收集器传递给空流的collect方法,收集器就没有起点.
+         */
+        System.out.println(maxDish);
+
+        // 使用Integer::sum获得总热量
+        totalCalories = menu.stream().collect(Collectors.reducing(0, Dish::getCalories, Integer::sum));
+        System.out.println("使用Integer::sum获得总热量totalCalories:" + totalCalories);
+
+        // 不使用收集器获得总热量
+        totalCalories = menu.stream().map(Dish::getCalories).reduce(Integer::sum).get();
+        // 注意reduce(Integer::sum) 返回的不是int而是Optional<Interger>,以便在空流的情况下安全的执行归约操作.
+        System.out.println("不使用收集器获得总热量totalCalories:" + totalCalories);
+
+        /**
+         * 根据时间情况选择最佳解决方案
+         * 函数式编程通常提供了多种方法来执行同一个操作.收集器在某种程度上比Stream接口上直接提供的方法用起来更复杂,但是好处在于它们
+         * 能提供更高水平的抽象和概括,也更容易重用和自定义
+         *
+         * 尽可能的给手头的问题探索不通的解决方案,但在通用方案里面,始终选择最专门化的一个,无论从可读性还是性能上看着一般都是最好的决定.
+         */
+
+
+        System.out.println("----------------分组------------------");
+        Map<Type, List<Dish>> dishesByType = menu.stream().collect(Collectors.groupingBy(Dish::getType));
+        System.out.println(dishesByType);
+        // 传入分组逻辑
+
+
+        Map<String, List<Dish>> levelMap = menu.stream().collect(Collectors.groupingBy(dish -> {
+            if (dish.getCalories() <= 400) {
+                return "DIET";
+            } else if (dish.getCalories() <= 700) {
+                return "NOMAL";
+            } else {
+                return "FAT";
+            }
+        }));
+        System.out.println(levelMap);
+
+        System.out.println("----------------多级分组------------------");
+
+        /**
+         * 要实现多级分组,我们可以使用一个由双参数版本的Collector.groupingBy工厂方法创建的收集器,它除了铍铜的分类函数外,还可以接受
+         * collector类型的第二个参数.我们可以把一个内层groupingBy传递给外层groupingBy,并定义一个为流中项目分类的二级标准.
+         */
+        Map<Type, Map<String, List<Dish>>> levelMap2 = menu.stream().collect(
+                Collectors.groupingBy(Dish::getType,
+                        Collectors.groupingBy(dish -> {
+                                    if (dish.getCalories() <= 400) {
+                                        return "DIET";
+                                    } else if (dish.getCalories() <= 700) {
+                                        return "NOMAL";
+                                    } else {
+                                        return "FAT";
+                                    }
+                                }
+                        )
+                )
+        );
+        System.out.println(levelMap2);
+        System.out.println("----------------多级分组2------------------");
+        // 传递给第一个groupingBy的第二个收集器可以是任何类型,而不一定是另一个groupingBy
+        Map<Type, Long> typeCount = menu.stream().collect(Collectors.groupingBy(Dish::getType, Collectors.counting()));
+        System.out.println(typeCount);
+
+        Map<Type, Optional<Dish>> mostCaloricbyType = menu.stream().collect(Collectors.groupingBy(Dish::getType
+                , Collectors.maxBy(Comparator.comparingInt(Dish::getCalories))));
+        System.out.println(mostCaloricbyType);
+
+        // 把收集结果转换成另一种类型 Collectors.collectingAndThen
+        System.out.println("----------------把收集结果转换成另一种类型------------------");
+        Map<Type, Dish> mostDishMap = menu.stream().collect(Collectors.groupingBy(Dish::getType
+                , Collectors.collectingAndThen(Collectors.maxBy(Comparator.comparingInt(Dish::getCalories)), Optional::get
+                )));
+        System.out.println(mostDishMap);
+
+        // mapping方法接收2个参数:一个函数对流中的元素做变换,另一个则将变换的结果对象收集起来.
+        // 目的是在累加之前对每个输入元素应用一个映射函数,这样就可以接受特定类型元素的收集器适应不同类型的对象.
+        Map<Type, Set<String>> setMap = menu.stream().collect(Collectors.groupingBy(
+                Dish::getType, Collectors.mapping(
+                        dish -> {
+                            if (dish.getCalories() <= 400) {
+                                return "DIET";
+                            } else if (dish.getCalories() <= 700) {
+                                return "NOMAL";
+                            } else {
+                                return "FAT";
+                            }
+                        }, Collectors.toSet()
+                )
+        ));
+
+        System.out.println(setMap);
+
+        Map<Type, Set<String>> setMap2 = menu.stream().collect(Collectors.groupingBy(
+                Dish::getType, Collectors.mapping(
+                        dish -> {
+                            if (dish.getCalories() <= 400) {
+                                return "DIET";
+                            } else if (dish.getCalories() <= 700) {
+                                return "NOMAL";
+                            } else {
+                                return "FAT";
+                            }
+                        }, Collectors.toCollection(HashSet::new)  // 选择指定的数据结构.
+                )
+        ));
+        System.out.println(setMap2);
+
+        System.out.println("--------------分区----------");
+        /**
+         * 分区是分组的特殊情况:由一个谓词(返回一个布尔值的函数)作为分类函数,它称为分区函数.分区函数返回一个布尔值,
+         * 这意味着得到的分组Map的键类型是Boolean,于是它最多可以分为两组,true和false.
+         */
+        Map<Boolean, List<Dish>> partitionedMenu = menu.stream().collect(Collectors.partitioningBy(Dish::isVegetarian));
+
+        System.out.println(partitionedMenu);
+
         System.out.println("--------------并行(待续)----------");
 
     }
-
-
-
-
 
     public static void constructorStream() {
         // 由值创建流:使用静态方法Stream.of,通过显示值创建一个流.可以接受任意数量参数.
@@ -244,7 +435,6 @@ public class StreamPractise {
         int sum = numbers.stream().reduce(1, (a, b) -> a * b);
         System.out.println(sum);
     }
-
 
     public static void sumReduce() {
         List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
@@ -435,14 +625,14 @@ public class StreamPractise {
         dishes.forEach(dish -> System.out.println(dish));
 
     }
-    public enum Type {MEAT, FISH , OHTER}
+
+    public enum Type {MEAT, FISH, OHTER}
 
     private static class Dish {
         private final String name;
         private final boolean vegetarian;
         private final int calories;
         private final Type type;
-
 
 
         public Dish(String name, boolean vegetarian, int calories, Type type) {
@@ -478,16 +668,5 @@ public class StreamPractise {
                     '}';
         }
     }
-    public static List<Dish> menu = Arrays.asList(
-            new Dish("pork", false, 800, Type.MEAT),
-            new Dish("beef", false, 700, Type.MEAT),
-            new Dish("chicken", false, 400, Type.MEAT),
-            new Dish("french fries", true, 530, Type.OHTER),
-            new Dish("rice", true, 350, Type.OHTER),
-            new Dish("season fruit", true, 120, Type.OHTER),
-            new Dish("pizza", true, 550, Type.OHTER),
-            new Dish("prawna", false, 300, Type.FISH),
-            new Dish("salmon", false, 450, Type.FISH)
-    );
 
 }
