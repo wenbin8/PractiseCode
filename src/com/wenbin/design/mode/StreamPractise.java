@@ -184,12 +184,14 @@ public class StreamPractise {
         // 广义的归约汇总,上面所有的收集器,都是一个可以用reducing工厂方法定义的归约过程的特殊情况.方便可读性.
         /**
          * Collectors.reducing 需要3个参数:
-         * 第一个参数是归约操作的起始值,也是流中没有元素时的返回值,所以很显然对于值和而言0是一个很合适的值
+         * 第一个参数是归约操作的起始值,也是流中没有元素时的返回值,所以很显然对于值
+         * 和而言0是一个很合适的值
          * 第二个参数就是需要归约的值
          * 第三个参数将第一个参数和第二个参数累积成一个同类型值的操作.
          */
         // 用reducing方法创建收集器计算菜单总热量
-        int totalCalories = menu.stream().collect(Collectors.reducing(0, Dish::getCalories, (i, j) -> i + j));
+        int totalCalories = menu.stream().collect(
+                Collectors.reducing(0, Dish::getCalories, (i, j) -> i + j));
         System.out.println("totalCalories:" + totalCalories);
 
         /**
