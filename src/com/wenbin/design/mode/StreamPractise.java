@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -312,10 +313,70 @@ public class StreamPractise {
         System.out.println(setMap2);
 
         System.out.println("--------------并行(待续)----------");
+        System.out.println("----------------组合式异步1----------------");
+        // 组合异步1
+        List<String> list= menu.stream()
+                // 拆分线程
+                .map(s -> CompletableFuture.supplyAsync(() -> {
+                    System.out.println(Thread.currentThread() + "- " + s.getName() + ":" + s.getType());
+                    return s.getName() + ":" + s.getType();
+                }))
+                // 等待执行完成
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
+
+        list.stream()
+                .filter(s -> s.length() > 2)
+                // 拆分线程计算
+                .map(s -> CompletableFuture.supplyAsync(() -> {
+                    System.out.println(Thread.currentThread() + "2- " + s);
+                    if (s.length() >= 5) {
+                        return s + " 长度大于等于5";
+                    } else {
+                        return s + " 长度小于5";
+                    }
+
+
+                }))
+                // 等待执行完成
+                .map(CompletableFuture::join)
+                // 收集结果
+                .collect(Collectors.toList())
+                .forEach(System.out::println);
+
+        // 组合异步2
+        System.out.println("------------------组合异步2----------------------");
+        menu.stream()
+                // 拆分线程
+                .map(s -> CompletableFuture.supplyAsync(() -> {
+                    System.out.println(Thread.currentThread() + "- " + s.getName() + ":" + s.getType());
+                    return s.getName() + ":" + s.getType();
+                }))
+                // 等待执行完成
+                .map(CompletableFuture::join)
+                // 过滤
+                .filter(s -> {
+                    System.out.println("filter:" + Thread.currentThread());
+                    return s.length() > 2;
+                })
+                // 拆分线程计算
+                .map(s -> CompletableFuture.supplyAsync(() -> {
+                    System.out.println(Thread.currentThread() + "2- " + s);
+                    if (s.length() >= 5) {
+                        return s + " 长度大于等于5";
+                    } else {
+                        return s + " 长度小于5";
+                    }
+                }))
+                // 等待执行完成
+                .map(CompletableFuture::join)
+                // 收集结果
+                .collect(Collectors.toList())
+                .forEach(System.out::println);
 
     }
 
-    public static void  constructorStream() {
+    public static void constructorStream() {
         // 由值创建流:使用静态方法Stream.of,通过显示值创建一个流.可以接受任意数量参数.
         Stream<String> stream = Stream.of("Java 8", "Lambdas", "In ", "Action");
         stream.map(String::toUpperCase)
